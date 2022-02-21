@@ -74,7 +74,8 @@ class loaduserview(APIView):
     def get(self, request, format=None):
         try:
             user=request.user
-            user = UserSerializer(user)
+            client = Client.objects.get(user=user)
+            user = UserSerializer(client)
             return Response(
                 {'user': user.data},
                 status=status.HTTP_200_OK
@@ -86,20 +87,21 @@ class loaduserview(APIView):
             )
 
 
-@api_view(['POST'])
-def userProfile(request):
-    data = request.data
+
 
 @api_view(['GET'])
 def apilist(request):
     api_urls = {
-        'login' : '/api-auth/login/',
+        'login' : '/api/token/',
+        'refresh token': 'api/token/refresh/',
         'register' : '/api/account/register',
         'all budgets' : '/api/account/allBudgets',
         'all budget items' : '/api/account/allBudgetItems/slug/',
+        'budget delete': "/api/account/BudgetDelete/<str:slug>/",
+        'budgetItem delete': "/api/account/BudgetItemsDelete/<str:slug>/"
     }
     message = 'pending'
-    return HttpResponse(message)
+    return Response(api_urls)
 
 
 @api_view(['GET'])
@@ -115,12 +117,9 @@ def allBudget(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def allBudgetItem(request, slug):
-
     try:
         user = request.user
-        print(user)
-        Budget.objects.get(id = slug)
-        budgetItem = Budget_item.objects.filter(budget_id = slug)
+        budgetItem = Budget_item.objects.filter(budget_id = slug, user=user)
         budgetItem = BudgetItemSerializer(budgetItem, many=True)
         return Response(budgetItem.data)
 
@@ -132,33 +131,52 @@ def allBudgetItem(request, slug):
         )
 
 
-
-
-
-
-
-
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def budget_create(request):
     serializer = BudgetSerializer(data=request.data)
-
+    user = request.user
+    client = Client.objects.get(user=user)
     if serializer.is_valid():
-        serializer.save()
-        status ='success'
+        serializer.save(user=client)
+        status="success"
     else:
         print(serializer.errors)
         print('request not valid')
         status = 'fail'
     return Response(status)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def budget_delete(request, slug):
+    try:
+        user = request.user
+        budget = Budget.objects.get(id=slug)
+        if budget.user == user:
+            budget.delete()
+            return Response(
+                {'success':'Budget deleted'},
+            )
+        else:
+            return Response(
+                {'error':'Budget does not belong to user'},
+            )
+    except:
+        return Response(
+            {'error':'Something went wrong'},
+
+        )
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def budgetItem_create(request):
-
+    user = request.user
     serializer = BudgetItemSerializer(data=request.data)
-
+    client = Client.objects.get(user=user)
     if serializer.is_valid():
-        serializer.save()
+        serializer.save(user = client)
         status ='success'
     else:
         print(serializer.errors)
@@ -167,3 +185,23 @@ def budgetItem_create(request):
     return Response(status)
 
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def budgetitem_delete(request, slug):
+    try:
+        user = request.user
+        budget = Budget_item.objects.get(id=slug)
+        if budget.user == user:
+            budget.delete()
+            return Response(
+                {'success':'BudgetItem deleted'},
+            )
+        else:
+            return Response(
+                {'error':'BudgetItem does not belong to user'},
+            )
+    except:
+        return Response(
+            {'error':'Something went wrong'},
+
+        )

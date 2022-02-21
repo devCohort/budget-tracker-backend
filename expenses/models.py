@@ -23,7 +23,7 @@ BUDGET_CURRENCY = (
 )
 
 class Budget(models.Model):
-    user = models.ForeignKey(Client, on_delete=models.CASCADE, default=1)
+    user = models.ForeignKey(Client, related_name='budgets', on_delete=models.CASCADE)
     budget_name = models.CharField(max_length=15)
     amount = models.IntegerField()
     budget_description = models.CharField(max_length=200)

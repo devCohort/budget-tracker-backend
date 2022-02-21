@@ -3,20 +3,24 @@ from .models import *
 from django.contrib.auth.models import User
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model=User
-        fields = ['username, name, email', 'password' ]
-
-
 class BudgetSerializer(serializers.ModelSerializer):
     class Meta:
+
         model=Budget
-        fields = '__all__'
+        fields = ['budget_name', 'budget_description', 'amount', 'budget_type', 'currency']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    budgets = BudgetSerializer(many=True, read_only=True)
+    class Meta:
+        model=Client
+        fields = ['user', 'email', 'name', 'budgets']
+
+
 
 
 class BudgetItemSerializer(serializers.ModelSerializer):
     class Meta:
         model=Budget_item
-        fields = '__all__'
+        fields = ['item_name', 'item_amount', 'budget']
 
