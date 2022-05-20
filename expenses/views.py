@@ -24,15 +24,16 @@ class RegisterView(APIView):
         password = data['password']
         email = data['email']
         re_password = data['re_password']
+
         if password == re_password:
             if len(password) >=8:
-                if not User.objects.filter(username=username).exists():
-                    user= User.objects.create(
+                if not User.objects.filter(username=username).exists() and not User.objects.filter(email=email):
+                    User.objects.create_user(
                         username = username,
                         password = password,
                         email = email
                     )
-                    user.save
+
                     user = User.objects.get(username = username)
                     client =Client.objects.create(
                         name = name,
@@ -53,7 +54,7 @@ class RegisterView(APIView):
                         )
                 else:
                     return Response (
-                        {'error': 'username already exist'},
+                        {'error': 'username or Email already exist'},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
 
@@ -108,8 +109,9 @@ def apilist(request):
 @permission_classes([IsAuthenticated])
 def allBudget(request):
     user = request.user
-    print(user)
+
     budget = Budget.objects.filter(user=user)
+    print(budget)
     budget = BudgetSerializer(budget, many=True)
     return Response(budget.data)
 
