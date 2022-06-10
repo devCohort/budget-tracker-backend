@@ -75,6 +75,7 @@ class loaduserview(APIView):
     def get(self, request, format=None):
         try:
             user=request.user
+
             client = Client.objects.get(user=user)
             user = UserSerializer(client)
             return Response(
@@ -109,8 +110,8 @@ def apilist(request):
 @permission_classes([IsAuthenticated])
 def allBudget(request):
     user = request.user
-
-    budget = Budget.objects.filter(user=user)
+    client = Client.objects.get(user=user)
+    budget = Budget.objects.filter(user=client)
     print(budget)
     budget = BudgetSerializer(budget, many=True)
     return Response(budget.data)
@@ -121,7 +122,8 @@ def allBudget(request):
 def allBudgetItem(request, slug):
     try:
         user = request.user
-        budgetItem = Budget_item.objects.filter(budget_id = slug, user=user)
+        client = Client.objects.get(user=user)
+        budgetItem = Budget_item.objects.filter(budget_id = slug, user=client)
         budgetItem = BudgetItemSerializer(budgetItem, many=True)
         return Response(budgetItem.data)
 
